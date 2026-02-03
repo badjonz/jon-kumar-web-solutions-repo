@@ -40,5 +40,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# BMad and other local development artifacts
+_bmad/
+_bmad-output/
+.claude/
+.gemini/
+.gemini-clipboard/
+.playwright-mcp/
+.qwen/
+test-design-system.py
+
 
 
