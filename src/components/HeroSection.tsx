@@ -8,15 +8,20 @@ export const HeroSection = () => {
 
   return (
     <motion.section
-      initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+      initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
-      className="relative w-full py-20 md:py-32"
+      transition={{ duration: shouldReduceMotion ? 0 : 0.6, ease: "easeOut" }}
+      className="relative w-full py-20 md:py-32 overflow-hidden"
     >
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-1 bg-orange-500" />
+      {/* Subtle gradient background for visual interest */}
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-slate-500/5 pointer-events-none"
+        aria-hidden="true"
+      />
+      <div className="container mx-auto px-4 md:px-6 relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 md:w-48 lg:w-64 h-1 bg-orange-500" />
         <div className="grid gap-6 text-center">
-          <h1 className="text-[2.5rem] font-bold tracking-tighter md:text-[4rem]">
+          <h1 className="text-[2.5rem] font-bold tracking-tighter leading-tight md:text-[4rem] md:leading-tight">
             Modern Web Solutions,{" "}
             <span className="text-orange-500">Expertly Delivered</span>
           </h1>

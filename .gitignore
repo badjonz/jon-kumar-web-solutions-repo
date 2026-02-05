@@ -53,5 +53,10 @@ _bmad-output/
 .qwen/
 test-design-system.py
 
+# Local verification scripts and screenshots
+epic2_screenshots/
+epic2_verification.mjs
+epic2_verification.py
+
 
 

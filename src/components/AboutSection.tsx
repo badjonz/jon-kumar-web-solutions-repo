@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, Variants } from "framer-motion";
 
 type TrustSignal = {
   id: string;
@@ -61,14 +61,14 @@ const TrustSignalItem = ({ signal }: { signal: TrustSignal }) => (
   </div>
 );
 
-const LighthouseBadge = () => (
+const LighthouseBadge = ({ score = 100 }: { score?: number }) => (
   <div
-    className="inline-flex items-center gap-3 p-4 bg-card border border-border rounded-lg"
+    className="inline-flex items-center gap-3 p-4 bg-card border border-border rounded-lg shadow-sm"
     role="img"
-    aria-label="Lighthouse Performance Score: 100 out of 100"
+    aria-label={`Lighthouse Performance Score: ${score} out of 100`}
   >
     <div className="w-16 h-16 rounded-full border-4 border-accent flex items-center justify-center">
-      <span className="text-2xl font-bold text-foreground">100</span>
+      <span className="text-2xl font-bold text-foreground">{score}</span>
     </div>
     <div className="text-sm">
       <div className="font-medium text-foreground">Lighthouse</div>
@@ -80,15 +80,47 @@ const LighthouseBadge = () => (
 export const AboutSection = () => {
   const shouldReduceMotion = useReducedMotion();
 
+  // Container animation with staggered children
+  const containerVariants: Variants = shouldReduceMotion
+    ? {
+        hidden: { opacity: 1 },
+        visible: { opacity: 1 },
+      }
+    : {
+        hidden: { opacity: 0 },
+        visible: {
+          opacity: 1,
+          transition: {
+            staggerChildren: 0.1,
+            delayChildren: 0.2,
+          },
+        },
+      };
+
+  // Trust signal item animation
+  const itemVariants: Variants = shouldReduceMotion
+    ? {
+        hidden: { opacity: 1, y: 0 },
+        visible: { opacity: 1, y: 0 },
+      }
+    : {
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: { duration: 0.4, ease: "easeOut" },
+        },
+      };
+
   return (
     <motion.section
       id="about"
       aria-labelledby="about-heading"
       className="py-16 lg:py-24 bg-background"
-      initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+      initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: shouldReduceMotion ? 0 : 0.6, ease: "easeOut" }}
     >
       <div className="mx-auto max-w-[1200px] px-4 md:px-6 lg:px-8">
         <h2
@@ -109,12 +141,20 @@ export const AboutSection = () => {
             </p>
             <LighthouseBadge />
           </div>
-          {/* Right: Trust signals */}
-          <div className="space-y-6">
+          {/* Right: Trust signals with staggered animation */}
+          <motion.div
+            className="space-y-6"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+          >
             {trustSignals.map((signal) => (
-              <TrustSignalItem key={signal.id} signal={signal} />
+              <motion.div key={signal.id} variants={itemVariants}>
+                <TrustSignalItem signal={signal} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
     </motion.section>

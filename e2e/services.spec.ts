@@ -1,5 +1,49 @@
 import { test, expect } from '@playwright/test';
 
+test.describe('ServicesSection - Icons', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('each service card displays an icon', async ({ page }) => {
+    const servicesSection = page.locator('#services');
+    await expect(servicesSection).toBeVisible();
+
+    const cards = servicesSection.locator('[data-slot="card"]');
+    await expect(cards).toHaveCount(3);
+
+    // Each card should have an SVG icon
+    for (const card of await cards.all()) {
+      const icon = card.locator('svg');
+      await expect(icon).toBeVisible();
+    }
+  });
+
+  test('service icons have aria-hidden for accessibility', async ({ page }) => {
+    const servicesSection = page.locator('#services');
+    await expect(servicesSection).toBeVisible();
+
+    // All service icons should have aria-hidden="true" since they are decorative
+    const icons = page.locator('#services svg[aria-hidden="true"]');
+    await expect(icons).toHaveCount(3);
+  });
+
+  test('icons use orange accent color', async ({ page }) => {
+    const servicesSection = page.locator('#services');
+    await expect(servicesSection).toBeVisible();
+
+    const cards = servicesSection.locator('[data-slot="card"]');
+    for (const card of await cards.all()) {
+      const iconContainer = card.locator('svg').first();
+      await expect(iconContainer).toBeVisible();
+
+      // Verify parent container has text-orange-500 class (which provides #f97316)
+      const parentDiv = card.locator('div[aria-hidden="true"]').first();
+      await expect(parentDiv).toHaveClass(/text-orange-500/);
+    }
+  });
+});
+
 test.describe('ServicesSection', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -64,35 +108,68 @@ test.describe('ServicesSection', () => {
     });
   });
 
-  test('cards have hover states', async ({ page }) => {
+  test('staggered animation respects reduced motion', async ({ page }) => {
+    // Emulate reduced motion preference
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+
+    // With reduced motion, all content should be immediately visible
+    const servicesSection = page.locator('#services');
+    await expect(servicesSection).toBeVisible();
+
+    // All cards should be fully visible immediately (opacity: 1)
+    const cards = servicesSection.locator('[data-slot="card"]');
+    for (let i = 0; i < 3; i++) {
+      const card = cards.nth(i);
+      await expect(async () => {
+        const opacity = await card.evaluate((el) => {
+          // Get the parent motion.div wrapper's opacity
+          const parent = el.parentElement;
+          return parent ? window.getComputedStyle(parent).opacity : '1';
+        });
+        expect(opacity).toBe('1');
+      }).toPass({ timeout: 1000 });
+    }
+  });
+
+  // Only run hover test on desktop (hover doesn't work reliably on mobile touch devices)
+  test('cards have hover states', async ({ page, isMobile }) => {
+    // Skip hover test on mobile devices as they don't support hover
+    test.skip(isMobile === true, 'Hover states are not applicable on mobile devices');
+
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/');
 
     const firstCard = page.locator('#services [data-slot="card"]').first();
     await expect(firstCard).toBeVisible();
 
-    // Get initial box-shadow
-    const initialShadow = await firstCard.evaluate((el) => {
-      return window.getComputedStyle(el).boxShadow;
+    // Get initial computed styles before hover
+    const initialStyles = await firstCard.evaluate((el) => {
+      const style = window.getComputedStyle(el);
+      return {
+        boxShadow: style.boxShadow,
+        borderColor: style.borderColor,
+      };
     });
 
     // Hover over the card
     await firstCard.hover();
 
-    // Wait for transition
-    await page.waitForTimeout(200);
+    // Wait for CSS transition to complete by polling for style change
+    await expect(async () => {
+      const hoverStyles = await firstCard.evaluate((el) => {
+        const style = window.getComputedStyle(el);
+        return {
+          boxShadow: style.boxShadow,
+          borderColor: style.borderColor,
+        };
+      });
 
-    // Get hover state box-shadow
-    const hoverShadow = await firstCard.evaluate((el) => {
-      return window.getComputedStyle(el).boxShadow;
-    });
+      // Check if either box-shadow or border-color changed on hover
+      const shadowChanged = hoverStyles.boxShadow !== initialStyles.boxShadow;
+      const borderChanged = hoverStyles.borderColor !== initialStyles.borderColor;
 
-    // Shadow should change on hover (hover:shadow-lg adds shadow)
-    // Either the shadow value changes, or we verify the class includes hover styling
-    const hasHoverClass = await firstCard.evaluate((el) => {
-      return el.className.includes('hover:shadow-lg') || el.className.includes('hover:border-orange');
-    });
-
-    expect(hasHoverClass).toBe(true);
+      expect(shadowChanged || borderChanged).toBe(true);
+    }).toPass({ timeout: 1000 });
   });
 });
