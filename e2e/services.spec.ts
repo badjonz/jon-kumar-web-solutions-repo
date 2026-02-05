@@ -9,7 +9,7 @@ test.describe('ServicesSection - Icons', () => {
     const servicesSection = page.locator('#services');
     await expect(servicesSection).toBeVisible();
 
-    const cards = servicesSection.locator('[data-slot="card"]');
+    const cards = servicesSection.locator('[data-testid="service-card"]');
     await expect(cards).toHaveCount(3);
 
     // Each card should have an SVG icon
@@ -32,7 +32,7 @@ test.describe('ServicesSection - Icons', () => {
     const servicesSection = page.locator('#services');
     await expect(servicesSection).toBeVisible();
 
-    const cards = servicesSection.locator('[data-slot="card"]');
+    const cards = servicesSection.locator('[data-testid="service-card"]');
     for (const card of await cards.all()) {
       const iconContainer = card.locator('svg').first();
       await expect(iconContainer).toBeVisible();
@@ -54,7 +54,7 @@ test.describe('ServicesSection', () => {
     await expect(servicesSection).toBeVisible();
 
     // Check for the 3 service cards (use data-slot="card" for top-level cards only)
-    const cards = servicesSection.locator('[data-slot="card"]');
+    const cards = servicesSection.locator('[data-testid="service-card"]');
     await expect(cards).toHaveCount(3);
 
     // Verify card titles
@@ -118,7 +118,7 @@ test.describe('ServicesSection', () => {
     await expect(servicesSection).toBeVisible();
 
     // All cards should be fully visible immediately (opacity: 1)
-    const cards = servicesSection.locator('[data-slot="card"]');
+    const cards = servicesSection.locator('[data-testid="service-card"]');
     for (let i = 0; i < 3; i++) {
       const card = cards.nth(i);
       await expect(async () => {
@@ -140,7 +140,7 @@ test.describe('ServicesSection', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/');
 
-    const firstCard = page.locator('#services [data-slot="card"]').first();
+    const firstCard = page.locator('#services [data-testid="service-card"]').first();
     await expect(firstCard).toBeVisible();
 
     // Get initial computed styles before hover

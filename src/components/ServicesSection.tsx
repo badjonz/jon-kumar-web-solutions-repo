@@ -98,7 +98,7 @@ export const ServicesSection = () => {
             const Icon = service.icon;
             return (
               <motion.div key={service.id} variants={cardVariants}>
-                <Card className="h-full py-5 px-5 lg:py-6 lg:px-6 shadow-sm hover:shadow-lg hover:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500 focus-within:ring-offset-2 transition-all duration-150">
+                <Card data-testid="service-card" className="h-full py-5 px-5 lg:py-6 lg:px-6 shadow-sm hover:shadow-lg hover:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500 focus-within:ring-offset-2 transition-all duration-150">
                   <CardHeader className="p-0">
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 text-orange-500" aria-hidden="true">
