@@ -33,8 +33,9 @@ test.describe("Contact Section", () => {
   test.describe("Validation", () => {
     test("shows error on blur when name is empty", async ({ page }) => {
       const nameInput = page.getByLabel("Name");
-      await nameInput.focus();
-      await nameInput.blur();
+      await nameInput.click();
+      // Click elsewhere to trigger blur (Playwright .blur() is unreliable with React)
+      await page.getByLabel("Email").click();
       await expect(page.getByText("Please enter your name")).toBeVisible();
     });
 
@@ -58,8 +59,9 @@ test.describe("Contact Section", () => {
 
     test("clears error when user starts typing", async ({ page }) => {
       const nameInput = page.getByLabel("Name");
-      await nameInput.focus();
-      await nameInput.blur();
+      await nameInput.click();
+      // Click elsewhere to trigger blur (Playwright .blur() is unreliable with React)
+      await page.getByLabel("Email").click();
       await expect(page.getByText("Please enter your name")).toBeVisible();
       await nameInput.fill("John");
       await expect(page.getByText("Please enter your name")).not.toBeVisible();
@@ -68,6 +70,16 @@ test.describe("Contact Section", () => {
 
   test.describe("Submission", () => {
     test("shows loading state during submission", async ({ page }) => {
+      // Delay API response to observe loading state
+      await page.route("**/api/contact", async (route) => {
+        await new Promise((r) => setTimeout(r, 2000));
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true, message: "Message sent successfully" }),
+        });
+      });
+
       await page.getByLabel("Name").fill("John Doe");
       await page.getByLabel("Email").fill("john@example.com");
       await page.getByLabel("Message").fill("I need a website for my business");
@@ -80,6 +92,16 @@ test.describe("Contact Section", () => {
     });
 
     test("disables fields during submission", async ({ page }) => {
+      // Delay API response to observe disabled state
+      await page.route("**/api/contact", async (route) => {
+        await new Promise((r) => setTimeout(r, 2000));
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true, message: "Message sent successfully" }),
+        });
+      });
+
       await page.getByLabel("Name").fill("John Doe");
       await page.getByLabel("Email").fill("john@example.com");
       await page.getByLabel("Message").fill("I need a website for my business");
@@ -91,6 +113,15 @@ test.describe("Contact Section", () => {
     });
 
     test("displays success message after submission", async ({ page }) => {
+      // Mock API success response
+      await page.route("**/api/contact", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true, message: "Message sent successfully" }),
+        });
+      });
+
       await page.getByLabel("Name").fill("John Doe");
       await page.getByLabel("Email").fill("john@example.com");
       await page.getByLabel("Message").fill("I need a website for my business");
@@ -115,7 +146,7 @@ test.describe("Contact Section", () => {
 
       await page.getByRole("button", { name: "Send Message" }).click();
 
-      // Form should not show success (it silently rejects)
+      // Form should not show success (it silently rejects via client-side check)
       await expect(page.getByText("Thanks, John Doe!")).not.toBeVisible();
     });
   });
@@ -128,6 +159,15 @@ test.describe("Contact Section", () => {
     });
 
     test("success message has proper ARIA attributes", async ({ page }) => {
+      // Mock API success response
+      await page.route("**/api/contact", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true, message: "Message sent successfully" }),
+        });
+      });
+
       await page.getByLabel("Name").fill("Test User");
       await page.getByLabel("Email").fill("test@example.com");
       await page.getByLabel("Message").fill("Test message for business");

@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 // Constants
-const MOCK_API_DELAY_MS = 1500;
 const SUCCESS_RESPONSE_TIME = "I'll respond within 24 hours.";
 const ERROR_MESSAGE = "Something went wrong. Please try again.";
 
@@ -129,9 +128,24 @@ export const ContactForm = () => {
     setSubmittedName(formData.name);
 
     try {
-      // Mock API call - will be replaced in Story 3.2
-      await new Promise((resolve) => setTimeout(resolve, MOCK_API_DELAY_MS));
-      setStatus("success");
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+          website: honeypot,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setStatus("success");
+      } else {
+        setStatus("error");
+      }
     } catch {
       setStatus("error");
     }
