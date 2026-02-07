@@ -157,9 +157,14 @@ test.describe("Contact API Route", () => {
       await page.getByLabel("Email").fill("john@example.com");
       await page.getByLabel("Message").fill("I need a website for my business");
 
-      // Fill honeypot (simulating bot behavior) - client-side check silently rejects
-      await page.locator('input[name="website"]').fill("spam-bot-value", {
-        force: true,
+      // Fill honeypot using native setter to reliably trigger React state update
+      // (Playwright .fill({ force: true }) on hidden elements may not fire React onChange)
+      await page.locator('input[name="website"]').evaluate((el: HTMLInputElement) => {
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLInputElement.prototype, 'value'
+        )?.set;
+        nativeInputValueSetter?.call(el, 'spam-bot-value');
+        el.dispatchEvent(new Event('input', { bubbles: true }));
       });
 
       await page.getByRole("button", { name: "Send Message" }).click();

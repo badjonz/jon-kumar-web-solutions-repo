@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import sanitizeHtml from 'sanitize-html';
 
 const MIN_NAME_LENGTH = 2;
 const MAX_NAME_LENGTH = 100;
@@ -13,7 +14,8 @@ const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-const stripHtmlTags = (str: string) => str.replace(/<[^>]*>?/gm, '');
+// Strip all HTML tags using sanitize-html (allows no tags)
+const sanitizeText = (str: string) => sanitizeHtml(str, { allowedTags: [], allowedAttributes: {} });
 
 // Handle non-POST requests
 export async function GET() {
@@ -71,10 +73,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Sanitize inputs
-    const sanitizedName = stripHtmlTags(trimmedName);
+    // Sanitize inputs using sanitize-html (strips all HTML tags)
+    const sanitizedName = sanitizeText(trimmedName);
     const sanitizedEmail = email.trim();
-    const sanitizedMessage = stripHtmlTags(trimmedMessage);
+    const sanitizedMessage = sanitizeText(trimmedMessage);
 
     // Send email via Resend (initialized inside handler - env var may not be
     // available at module load time, which causes 500 on all requests)
@@ -101,6 +103,31 @@ export async function POST(request: Request) {
         { success: false, error: 'Something went wrong. Please try again.' },
         { status: 500 }
       );
+    }
+
+    // Send confirmation email to the form submitter
+    const fromAddress = process.env.RESEND_FROM_EMAIL || 'Jon Kumar Web Solutions <onboarding@resend.dev>';
+    try {
+      await resend.emails.send({
+        from: fromAddress,
+        to: sanitizedEmail,
+        subject: `Thanks for reaching out, ${sanitizedName}!`,
+        html: `
+          <h2>Message Received</h2>
+          <p>Hi ${sanitizedName},</p>
+          <p>Thanks for getting in touch! I've received your message and will get back to you within 24 hours.</p>
+          <p><strong>Here's a copy of what you sent:</strong></p>
+          <blockquote style="border-left: 3px solid #f97316; padding-left: 12px; color: #555;">
+            ${sanitizedMessage.replace(/\n/g, '<br>')}
+          </blockquote>
+          <p>Best regards,<br>Jon Kumar</p>
+          <hr>
+          <p><em>Jon Kumar Web Solutions — jonkumar.dev</em></p>
+        `,
+      });
+    } catch (confirmationError) {
+      // Log but don't fail the request — the main notification was sent successfully
+      console.error('Confirmation email sending failed:', confirmationError);
     }
 
     return NextResponse.json(
