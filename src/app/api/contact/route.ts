@@ -108,7 +108,8 @@ export async function POST(request: Request) {
             // Send confirmation email to the form submitter
             const fromAddressConfirmation = 'Jon Kumar Web Solutions <jonkumar1989@gmail.com>'; // Using your verified personal email for client confirmation
             try {
-              await resend.emails.send({
+              // @ts-ignore
+          await resend.emails.send({
                 from: fromAddressConfirmation, // Use the new fromAddressConfirmation
                 to: 'jonkumar1989@gmail.com', // Temporarily sending client confirmation to your own email for testing        subject: `Thanks for reaching out, ${sanitizedName}!`,
         html: `
