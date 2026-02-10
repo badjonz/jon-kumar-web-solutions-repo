@@ -112,7 +112,7 @@ export async function POST(request: Request) {
           await resend.emails.send({
                 from: fromAddressConfirmation, // Use the new fromAddressConfirmation
                 to: 'jonkumar1989@gmail.com', // Temporarily sending client confirmation to your own email for testing
-            subject: `Thanks for reaching out, ${sanitizedName}!`,        subject: `Thanks for reaching out, ${sanitizedName}!`,
+            subject: `Thanks for reaching out, ${sanitizedName}!`,
         html: `
           <h2>Message Received</h2>
           <p>Hi ${sanitizedName},</p>
