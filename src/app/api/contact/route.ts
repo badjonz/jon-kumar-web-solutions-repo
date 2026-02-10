@@ -78,40 +78,89 @@ export async function POST(request: Request) {
     const sanitizedEmail = email.trim();
     const sanitizedMessage = sanitizeText(trimmedMessage);
 
-    // Send email via Resend (initialized inside handler - env var may not be
-    // available at module load time, which causes 500 on all requests)
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const { error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'Jon Kumar Web Solutions <onboarding@resend.dev>',
-      to: process.env.RESEND_TO_EMAIL || 'jon@example.com',
-      subject: `New Contact: ${sanitizedName} via jonkumar.dev`,
-      replyTo: sanitizedEmail,
-      html: `
-        <h2>New Contact Form Submission</h2>
-        <p><strong>Name:</strong> ${sanitizedName}</p>
-        <p><strong>Email:</strong> ${sanitizedEmail}</p>
-        <p><strong>Message:</strong></p>
-        <p>${sanitizedMessage.replace(/\n/g, '<br>')}</p>
-        <hr>
-        <p><em>Sent from the contact form at jonkumar.dev</em></p>
-      `,
-    });
+        // Send email via Resend (initialized inside handler - env var may not be
 
-    if (error) {
-      console.error('Resend email sending failed:', error);
-      return NextResponse.json(
-        { success: false, error: 'Something went wrong. Please try again.' },
-        { status: 500 }
-      );
-    }
+        // available at module load time, which causes 500 on all requests)
 
-            // Send confirmation email to the form submitter
-                    const fromAddress = process.env.RESEND_FROM_EMAIL || 'Jon Kumar Web Solutions <onboarding@resend.dev>';
-                    try {
-                      // @ts-ignore
-                      await resend.emails.send({
-                        from: fromAddress,                to: 'jonkumar1989@gmail.com', // Temporarily sending client confirmation to your own email for testing
-            subject: `Thanks for reaching out, ${sanitizedName}!`,
+        const resend = new Resend(process.env.RESEND_API_KEY);
+
+        const { error } = await resend.emails.send({
+
+          // IMPORTANT FOR PRODUCTION: Replace 'onboarding@resend.dev' with an email from your verified custom domain.
+
+          // E.g., 'Jon Kumar Web Solutions <contact@yourdomain.com>'
+
+          from: process.env.RESEND_FROM_EMAIL || 'Jon Kumar Web Solutions <onboarding@resend.dev>',
+
+          to: process.env.RESEND_TO_EMAIL || 'jon@example.com',
+
+          subject: `New Contact: ${sanitizedName} via jonkumar.dev`,
+
+          replyTo: sanitizedEmail,
+
+          html: `
+
+            <h2>New Contact Form Submission</h2>
+
+            <p><strong>Name:</strong> ${sanitizedName}</p>
+
+            <p><strong>Email:</strong> ${sanitizedEmail}</p>
+
+            <p><strong>Message:</strong></p>
+
+            <p>${sanitizedMessage.replace(/\n/g, '<br>')}</p>
+
+            <hr>
+
+            <p><em>Sent from the contact form at jonkumar.dev</em></p>
+
+          `,
+
+        });
+
+    
+
+        if (error) {
+
+          console.error('Resend email sending failed:', error);
+
+          return NextResponse.json(
+
+            { success: false, error: 'Something went wrong. Please try again.' },
+
+            { status: 500 }
+
+          );
+
+        }
+
+    
+
+                // Send confirmation email to the form submitter
+
+                // IMPORTANT FOR PRODUCTION:
+
+                // 1. You MUST verify a custom domain in Resend (e.g., yourdomain.com).
+
+                // 2. Then, set your RESEND_FROM_EMAIL environment variable to an email from that verified domain (e.g., contact@yourdomain.com).
+
+                // 3. Revert 'to' to 'sanitizedEmail' to send to the actual client.
+
+                // 4. Consider removing the // @ts-ignore by ensuring Resend types are compatible or using React templates.
+
+                const fromAddress = process.env.RESEND_FROM_EMAIL || 'Jon Kumar Web Solutions <onboarding@resend.dev>';
+
+                try {
+
+                  // @ts-ignore // TODO: Remove this @ts-ignore for production. It's a temporary workaround for type incompatibility.
+
+                  await resend.emails.send({
+
+                    from: fromAddress,
+
+                    to: 'jonkumar1989@gmail.com', // TODO: For production, change back to 'sanitizedEmail'
+
+                subject: `Thanks for reaching out, ${sanitizedName}!`,
         html: `
           <h2>Message Received</h2>
           <p>Hi ${sanitizedName},</p>
