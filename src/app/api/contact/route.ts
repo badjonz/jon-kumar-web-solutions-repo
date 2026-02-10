@@ -106,12 +106,11 @@ export async function POST(request: Request) {
     }
 
             // Send confirmation email to the form submitter
-            const fromAddressConfirmation = 'Jon Kumar Web Solutions <jonkumar1989@gmail.com>'; // Using your verified personal email for client confirmation
-            try {
-              // @ts-ignore
-          await resend.emails.send({
-                from: fromAddressConfirmation, // Use the new fromAddressConfirmation
-                to: 'jonkumar1989@gmail.com', // Temporarily sending client confirmation to your own email for testing
+                    const fromAddress = process.env.RESEND_FROM_EMAIL || 'Jon Kumar Web Solutions <onboarding@resend.dev>';
+                    try {
+                      // @ts-ignore
+                      await resend.emails.send({
+                        from: fromAddress,                to: 'jonkumar1989@gmail.com', // Temporarily sending client confirmation to your own email for testing
             subject: `Thanks for reaching out, ${sanitizedName}!`,
         html: `
           <h2>Message Received</h2>
