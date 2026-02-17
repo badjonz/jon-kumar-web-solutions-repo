@@ -3,6 +3,13 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import {
+  SITE_TITLE,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  CONTACT_EMAIL,
+  getSiteUrl,
+} from "@/lib/constants";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,12 +19,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-  ),
-  title: "Jon Kumar Web Solutions | Websites That Get You Found on Google",
-  description:
-    "Professional web solutions in Trinidad and Tobago. Fast, modern websites designed to get your business found on Google and convert visitors into customers.",
+  metadataBase: new URL(getSiteUrl()),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
   alternates: {
     canonical: "/",
   },
@@ -25,13 +29,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "/",
-    siteName: "Jon Kumar Web Solutions",
+    siteName: SITE_NAME,
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Jon Kumar Web Solutions - Professional websites in Trinidad and Tobago",
+        alt: `${SITE_NAME} - Professional websites in Trinidad and Tobago`,
       },
     ],
   },
@@ -58,9 +62,50 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Get site URL with production validation
+  const siteUrl = getSiteUrl();
+
+  // JSON-LD structured data for LocalBusiness schema
+  const jsonLd: {
+    "@context": string;
+    "@type": string;
+    name: string;
+    description: string;
+    url: string;
+    email: string;
+    image: string;
+    areaServed: {
+      "@type": string;
+      name: string;
+    };
+    serviceType: string;
+    sameAs: string[];
+  } = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: siteUrl,
+    email: CONTACT_EMAIL,
+    image: `${siteUrl}/og-image.png`,
+    areaServed: {
+      "@type": "Country",
+      name: "Trinidad and Tobago",
+    },
+    serviceType: "Web Development",
+    // TODO: Populate with social profile URLs (LinkedIn, GitHub, Twitter, etc.) when available
+    sameAs: [],
+  };
+
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
         <Header />
         {/* Skip link target - actual SkipLink component added in Epic 5 */}
         <main id="main-content">{children}</main>

@@ -171,3 +171,86 @@ test.describe("Sitemap & Robots.txt", () => {
     expect(content).toContain(`${siteUrl}/sitemap.xml`);
   });
 });
+
+/**
+ * JSON-LD Structured Data Tests
+ *
+ * These tests verify the presence and correctness of JSON-LD structured data.
+ *
+ * MANUAL VALIDATION REQUIRED (AC #5):
+ * After deployment, manually validate the JSON-LD using Google's Rich Results Test:
+ * https://search.google.com/test/rich-results
+ *
+ * This ensures the structured data is valid according to schema.org specifications
+ * and will be correctly interpreted by search engines for rich results.
+ */
+test.describe("JSON-LD Structured Data", () => {
+  let jsonLd: any;
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    // Parse JSON-LD once and reuse across all tests (DRY principle)
+    const jsonLdScript = await page.$('script[type="application/ld+json"]');
+    const jsonLdContent = await jsonLdScript?.textContent();
+
+    // Proper error handling - fail gracefully if script tag is missing
+    if (!jsonLdContent) {
+      throw new Error(
+        "JSON-LD script tag not found or has no content. Ensure <script type=\"application/ld+json\"> exists in layout.tsx",
+      );
+    }
+
+    jsonLd = JSON.parse(jsonLdContent);
+  });
+
+  test("has a JSON-LD script tag", async ({ page }) => {
+    const jsonLdScript = await page.$('script[type="application/ld+json"]');
+    expect(jsonLdScript).not.toBeNull();
+  });
+
+  test("JSON-LD has correct @context", async () => {
+    expect(jsonLd["@context"]).toBe("https://schema.org");
+  });
+
+  test("JSON-LD has correct @type", async () => {
+    expect(jsonLd["@type"]).toBe("LocalBusiness");
+  });
+
+  test("JSON-LD has correct name", async () => {
+    expect(jsonLd.name).toBe("Jon Kumar Web Solutions");
+  });
+
+  test("JSON-LD has correct description", async () => {
+    expect(jsonLd.description).toBe(
+      "Professional web solutions in Trinidad and Tobago. Fast, modern websites designed to get your business found on Google and convert visitors into customers.",
+    );
+  });
+
+  test("JSON-LD has correct url", async () => {
+    expect(jsonLd.url).toBe(siteUrl);
+  });
+
+  test("JSON-LD has correct email", async () => {
+    expect(jsonLd.email).toBe("info@jonkumarwebsolutions.com");
+  });
+
+  test("JSON-LD has correct image", async () => {
+    expect(jsonLd.image).toBe(`${siteUrl}/og-image.png`);
+  });
+
+  test("JSON-LD has correct areaServed structure", async () => {
+    expect(jsonLd.areaServed).toBeDefined();
+    expect(jsonLd.areaServed["@type"]).toBe("Country");
+    expect(jsonLd.areaServed.name).toBe("Trinidad and Tobago");
+  });
+
+  test("JSON-LD has correct serviceType", async () => {
+    expect(jsonLd.serviceType).toBe("Web Development");
+  });
+
+  test("JSON-LD has sameAs array", async () => {
+    expect(jsonLd.sameAs).toBeDefined();
+    expect(Array.isArray(jsonLd.sameAs)).toBe(true);
+    expect(jsonLd.sameAs).toEqual([]);
+  });
+});
