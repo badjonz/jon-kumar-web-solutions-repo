@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
+import { SkipLink } from "@/components/SkipLink";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import {
   SITE_TITLE,
@@ -100,6 +101,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
+        <SkipLink />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -107,8 +109,7 @@ export default function RootLayout({
           }}
         />
         <Header />
-        {/* Skip link target - actual SkipLink component added in Epic 5 */}
-        <main id="main-content">{children}</main>
+        <main id="main-content" tabIndex={-1}>{children}</main>
         <WhatsAppButton />
       </body>
     </html>

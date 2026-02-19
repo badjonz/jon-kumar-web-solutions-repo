@@ -146,4 +146,22 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Consistent focus-visible indicators per UX spec: 2px solid orange, 2px offset */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    box-shadow: none; /* Override shadcn ring */
+  }
+
+  /* Respect reduced motion preference for smooth scroll */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
 }

@@ -38,6 +38,9 @@ test.describe('Accessibility', () => {
       maxTabs--;
     }
 
+    // Verify skip link (a[href="#main-content"]) is first in the tab order
+    expect(focusedElements[0]).toContain('#main-content');
+
     // Verify we can tab to the main CTAs
     const hasTalkLink = focusedElements.some(e => e.includes('#contact'));
     const hasServicesLink = focusedElements.some(e => e.includes('#services'));
@@ -221,5 +224,176 @@ test.describe('Accessibility', () => {
     // This test passes regardless - it's informational
     // Color contrast issues are tracked as technical debt for design review
     expect(true).toBe(true);
+  });
+});
+
+test.describe('Image Optimization and Alt Text', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  // 7.2: All <img> elements have alt attribute (including empty alt for decorative) or aria-hidden
+  test('all rendered img elements have proper alt text or aria-hidden', async ({ page }) => {
+    const violations = await page.evaluate(() => {
+      const imgs = Array.from(document.querySelectorAll('img'));
+      return imgs
+        .filter(img => img.getAttribute('alt') === null && img.getAttribute('aria-hidden') !== 'true')
+        .map(img => (img as HTMLImageElement).src || img.getAttribute('src') || 'unknown src');
+    });
+
+    expect(violations, `img elements missing alt attribute: ${violations.join(', ')}`).toHaveLength(0);
+  });
+
+  // 7.3: All decorative SVGs have aria-hidden on themselves or a parent container
+  test('all SVGs are accessible: aria-hidden, parent aria-hidden, or meaningful role/label', async ({ page }) => {
+    const violations = await page.evaluate(() => {
+      const svgs = Array.from(document.querySelectorAll('svg'));
+      const bad: string[] = [];
+
+      for (const svg of svgs) {
+        const hasDirect = svg.getAttribute('aria-hidden') === 'true';
+        const hasMeaningfulRole = svg.getAttribute('role') === 'img';
+        const hasAriaLabel = svg.hasAttribute('aria-label') || svg.hasAttribute('aria-labelledby');
+        const hasTitle = svg.querySelector('title') !== null;
+
+        // Walk up to check if an ancestor has aria-hidden
+        let el: Element | null = svg.parentElement;
+        let parentHasAriaHidden = false;
+        while (el && el !== document.body) {
+          if (el.getAttribute('aria-hidden') === 'true') {
+            parentHasAriaHidden = true;
+            break;
+          }
+          el = el.parentElement;
+        }
+
+        if (!hasDirect && !parentHasAriaHidden && !hasMeaningfulRole && !hasTitle && !hasAriaLabel) {
+          bad.push(svg.outerHTML.substring(0, 80));
+        }
+      }
+      return bad;
+    });
+
+    expect(violations, `SVGs without proper accessibility markup: ${violations.join(' | ')}`).toHaveLength(0);
+  });
+
+  // 7.4: Lighthouse badge has role="img" and descriptive aria-label
+  test('Lighthouse badge has role="img" and descriptive aria-label', async ({ page }) => {
+    const badge = page.locator('[role="img"]').filter({ hasText: /lighthouse|performance/i }).first();
+    const directBadge = page.locator('[role="img"][aria-label*="Lighthouse"]');
+    await expect(directBadge).toBeVisible();
+
+    const ariaLabel = await directBadge.getAttribute('aria-label');
+    expect(ariaLabel).toContain('Lighthouse');
+    expect(ariaLabel).toContain('Performance');
+    expect(ariaLabel).toContain('100');
+
+    // Confirm role is present
+    const role = await directBadge.getAttribute('role');
+    expect(role).toBe('img');
+  });
+
+  // 7.5: No <img> elements missing explicit width/height (CLS prevention)
+  test('no img elements are missing explicit width or height (CLS prevention)', async ({ page }) => {
+    const unsized = await page.evaluate(() => {
+      const imgs = Array.from(document.querySelectorAll('img'));
+      return imgs
+        .filter(img => !img.hasAttribute('width') && !img.hasAttribute('height') && !img.style.width && !img.style.height)
+        .map(img => (img as HTMLImageElement).src || img.getAttribute('src') || 'unknown');
+    });
+
+    expect(unsized, `img elements without width/height: ${unsized.join(', ')}`).toHaveLength(0);
+  });
+
+  // 7.6: Track page resource weight; assert zero image bytes loaded (text/icon-based site)
+  test('no raster image bytes are loaded (text/icon-based site)', async ({ page }) => {
+    await page.waitForLoadState('networkidle');
+
+    const { imageTransferSize, totalKB } = await page.evaluate(() => {
+      const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
+      const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+
+      const imageResources = resources.filter(r =>
+        r.initiatorType === 'img' ||
+        /\.(jpg|jpeg|png|gif|webp|avif)(\?|$)/i.test(r.name)
+      );
+      const imageTransferSize = imageResources.reduce((sum, r) => sum + (r.transferSize || 0), 0);
+      const totalSize = (nav?.transferSize || 0) + resources.reduce((sum, r) => sum + (r.transferSize || 0), 0);
+      return { imageTransferSize, totalKB: Math.round(totalSize / 1024) };
+    });
+
+    // Log total page size for visibility (production target: < 500KB)
+    console.log(`Total page resource size: ${totalKB}KB (production target: <500KB)`);
+
+    // Core assertion: no raster image bytes loaded (site uses inline SVGs and CSS)
+    expect(imageTransferSize).toBe(0);
+  });
+
+  // 7.7: No broken image references on the page
+  test('no broken image references on the page', async ({ page }) => {
+    const broken = await page.evaluate(() => {
+      const imgs = Array.from(document.querySelectorAll('img'));
+      return imgs
+        .filter(img => !(img as HTMLImageElement).complete || (img as HTMLImageElement).naturalWidth === 0)
+        .map(img => (img as HTMLImageElement).src || img.getAttribute('src') || 'unknown src');
+    });
+
+    expect(broken, `Broken image references: ${broken.join(', ')}`).toHaveLength(0);
+  });
+});
+
+test.describe('Skip Link', () => {
+  test('skip link is the first focusable element when pressing Tab', async ({ page }) => {
+    await page.goto('/');
+    await page.keyboard.press('Tab');
+    const focused = page.locator(':focus');
+    await expect(focused).toHaveText('Skip to main content');
+  });
+
+  test('skip link text is "Skip to main content"', async ({ page }) => {
+    await page.goto('/');
+    const skipLink = page.locator('a[href="#main-content"]');
+    await expect(skipLink).toHaveText('Skip to main content');
+  });
+
+  test('skip link becomes visible when focused', async ({ page }) => {
+    await page.goto('/');
+    // Press Tab to focus the skip link via keyboard (triggers :focus-visible)
+    await page.keyboard.press('Tab');
+    const skipLink = page.locator('a[href="#main-content"]');
+    // When focused, sr-only is reversed — element should have visible dimensions
+    const boundingBox = await skipLink.boundingBox();
+    expect(boundingBox).toBeTruthy();
+    expect(boundingBox!.width).toBeGreaterThan(1);
+    expect(boundingBox!.height).toBeGreaterThan(1);
+  });
+
+  test('skip link is hidden when not focused', async ({ page }) => {
+    await page.goto('/');
+    const skipLink = page.locator('a[href="#main-content"]');
+    // Before focusing, skip link should be invisible via opacity: 0
+    await expect(skipLink).toHaveCSS('opacity', '0');
+  });
+
+  test('activating skip link moves focus to main content', async ({ page }) => {
+    await page.goto('/');
+    await page.keyboard.press('Tab');
+    // Activate the skip link with Enter
+    await page.keyboard.press('Enter');
+    // Use evaluate to unambiguously check document.activeElement — this fails without tabIndex={-1} on <main>
+    const isFocused = await page.evaluate(() => {
+      const main = document.getElementById('main-content');
+      return document.activeElement === main;
+    });
+    expect(isFocused).toBe(true);
+  });
+
+  test('scroll-behavior is auto when prefers-reduced-motion is reduce', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    const scrollBehavior = await page.evaluate(() => {
+      return window.getComputedStyle(document.documentElement).scrollBehavior;
+    });
+    expect(scrollBehavior).toBe('auto');
   });
 });
