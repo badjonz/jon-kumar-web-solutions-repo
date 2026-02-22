@@ -120,7 +120,7 @@ test.describe('Accessibility', () => {
     // Verify the referenced heading exists
     const servicesHeading = page.locator('#services-heading');
     await expect(servicesHeading).toBeVisible();
-    await expect(servicesHeading).toHaveText('Services');
+    await expect(servicesHeading).toHaveText('How I Help');
 
     // Check About section
     const aboutSection = page.locator('#about');
@@ -322,8 +322,9 @@ test.describe('Image Optimization and Alt Text', () => {
       return { imageTransferSize, totalKB: Math.round(totalSize / 1024) };
     });
 
-    // Log total page size for visibility (production target: < 500KB)
-    console.log(`Total page resource size: ${totalKB}KB (production target: <500KB)`);
+    // Log total page size for visibility only — dev mode bundles are significantly larger than production.
+    // In production (Vercel), analytics scripts load from CDN and are not bundled; target: <500KB.
+    console.log(`Total page resource size: ${totalKB}KB (dev mode; production target: <500KB — dev builds will exceed this)`);
 
     // Core assertion: no raster image bytes loaded (site uses inline SVGs and CSS)
     expect(imageTransferSize).toBe(0);

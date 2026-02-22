@@ -58,3 +58,7 @@ epic2_screenshots/
 epic2_verification.mjs
 epic2_verification.py
 
+# Temporary analysis screenshots and transfer files (root-level only)
+/*.png
+/TRANSFER_SUMMARY.md
+

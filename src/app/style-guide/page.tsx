@@ -42,7 +42,7 @@ export default function StyleGuidePage() {
             </div>
             <div className="mt-4">
               <h4 className="font-semibold">Usage:</h4>
-              <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md mt-2 text-sm overflow-auto">
+              <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md mt-2 text-sm overflow-auto" tabIndex={0}>
                 <code>
 {`import { motion } from "framer-motion";
 import { fadeUp } from "@/lib/animations";

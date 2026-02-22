@@ -8,7 +8,7 @@ test.describe("Contact Section", () => {
   test.describe("Form Rendering", () => {
     test("displays contact heading with inviting copy", async ({ page }) => {
       const heading = page.locator("#contact-heading");
-      await expect(heading).toHaveText("Contact");
+      await expect(heading).toHaveText("Let's Build Something Together");
       await expect(page.getByText("No pressure. No jargon.")).toBeVisible();
     });
 
