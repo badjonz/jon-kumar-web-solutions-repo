@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
 import { useLenis } from "lenis/react";
+import { SplitLines } from "@/components/SplitLines";
+import { CTALink } from "@/components/CTALink";
 
 const HERO_BG = "#ede8e0";
 const HEADER_H = "4rem";
@@ -186,16 +187,16 @@ export const HeroSection = () => {
                   backgroundColor: isActive
                     ? "#FFFDF5"
                     : "rgba(255, 255, 255, 0.25)",
-                  backdropFilter: isActive ? "none" : "blur(10px)",
-                  WebkitBackdropFilter: isActive ? "none" : "blur(10px)",
+                  backdropFilter: isActive ? "none" : "blur(27px)",
+                  WebkitBackdropFilter: isActive ? "none" : "blur(27px)",
                   border: isActive
                     ? "1px solid rgba(0,0,0,0.06)"
-                    : "1px solid rgba(255,255,255,0.40)",
+                    : "none",
                   transition: noMotion
                     ? "none"
                     : isMobile
-                      ? `height 0.6s ${EASE}, background-color 0.6s ${EASE}, border-color 0.6s ${EASE}`
-                      : `background-color 0.6s ${EASE}, border-color 0.6s ${EASE}`,
+                      ? `height 0.6s ${EASE}, background-color 0.6s ${EASE}`
+                      : `background-color 0.6s ${EASE}`,
                   willChange: "transform",
                 }}
                 onMouseEnter={!isMobile ? () => setActiveService(service.id) : undefined}
@@ -212,45 +213,35 @@ export const HeroSection = () => {
                     style={{
                       fontSize: "1.3rem",
                       fontWeight: 400,
-                      transform: isActive
-                        ? "translateY(-160%)"
-                        : "translateY(0%)",
                       opacity: isActive ? 0 : 1,
                       transition: noMotion
                         ? "none"
-                        : `transform 0.6s ${EASE}, opacity 0.6s ${EASE}`,
+                        : `opacity 0.4s ${EASE}`,
                     }}
                   >
                     {service.title}
                   </h3>
                 </div>
 
-                {/* Reveal content — description top, CTA bottom */}
+                {/* Reveal content — title + description top, CTA bottom */}
                 <div
                   className="absolute inset-0 flex flex-col justify-between"
                   style={{ padding: "1.5rem 1.75rem" }}
                 >
-                  {/* Description — starts hidden below, slides up */}
-                  <div style={{ overflow: "hidden" }}>
-                    <p
-                      className="text-stone-500 leading-relaxed"
-                      style={{
-                        fontSize: "0.875rem",
-                        transform: isActive
-                          ? "translateY(0%)"
-                          : "translateY(101%)",
-                        transition: noMotion
-                          ? "none"
-                          : `transform 1s ${EASE}`,
-                      }}
-                    >
-                      {service.description}
-                    </p>
-                  </div>
+                  {/* Description — each visual line slides up from its own clip barrier */}
+                  <SplitLines
+                    text={service.description}
+                    isActive={!!isActive}
+                    noMotion={noMotion}
+                    className="text-stone-500 leading-relaxed"
+                    style={{ fontSize: "0.875rem" }}
+                    delayStart={0.02}
+                    lineDelay={0.04}
+                    duration={0.4}
+                  />
 
                   {/* Divider + CTA anchored to bottom */}
                   <div>
-                    {/* Divider — scales in from left */}
                     <div
                       style={{
                         height: "1px",
@@ -262,25 +253,13 @@ export const HeroSection = () => {
                           : `transform 0.8s ${EASE} ${isActive ? "0.1s" : "0s"}`,
                       }}
                     />
-
-                    {/* CTA — starts hidden below, slides up */}
                     <div style={{ overflow: "hidden", paddingTop: "0.75rem" }}>
-                      <a
-                        href={service.href}
-                        className="flex items-center justify-between text-stone-900"
-                        style={{
-                          fontSize: "0.875rem",
-                          transform: isActive
-                            ? "translateY(0%)"
-                            : "translateY(101%)",
-                          transition: noMotion
-                            ? "none"
-                            : `transform 0.6s ${EASE} ${isActive ? "0.14s" : "0s"}`,
-                        }}
+                      <motion.div
+                        animate={noMotion ? {} : { y: isActive ? "0%" : "102%" }}
+                        transition={{ duration: 0.5, ease: EASE_ARRAY, delay: isActive ? 0.08 : 0 }}
                       >
-                        <span>Get in touch</span>
-                        <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                      </a>
+                        <CTALink href={service.href} noMotion={noMotion} />
+                      </motion.div>
                     </div>
                   </div>
                 </div>
